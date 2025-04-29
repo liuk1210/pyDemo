@@ -550,6 +550,10 @@ def calculate_sha256(file_path):
 
 
 if __name__ == "__main__":
-    folder1 = input("请输入源文件夹路径：")
-    folder2 = input("请输入需要对比的文件夹路径：")
+    folder1 = input(r"请输入源文件夹路径（默认为D:\Workspaces）：")
+    if folder1.strip() == "":
+        folder1 = r"D:\Workspaces"
+    folder2 = input(r"请输入需要对比的文件夹路径（默认为V:\Workspaces）：")
+    if folder2.strip() == "":
+        folder2 = r"V:\Workspaces"
     FolderComparator.compare_folders(folder1, folder2)
