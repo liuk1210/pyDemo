@@ -435,7 +435,7 @@ class HtmlFileTreePrinter:
 
 class FolderComparator:
     @staticmethod
-    def compare_folders(path1, path2):
+    def compare_folders(path1, path2, compare_sha256):
         if not os.path.exists(path1):
             print(f"{path1}不存在")
             return
@@ -445,7 +445,9 @@ class FolderComparator:
         base_path1 = os.path.normpath(path1)
         base_path2 = os.path.normpath(path2)
         same_path_files, diff_info = FolderComparator.collect_file_differences(base_path1, base_path2)
-        FolderComparator.compare_files_in_parallel(same_path_files, base_path1, base_path2)
+        if compare_sha256:
+            FolderComparator.compare_files_in_parallel(same_path_files, base_path1, base_path2)
+        print("文件夹比对结束")
 
     @staticmethod
     def collect_file_differences(base_path1: LiteralString, base_path2: LiteralString):
@@ -556,4 +558,8 @@ if __name__ == "__main__":
     folder2 = input(r"请输入需要对比的文件夹路径（默认为V:\Workspaces）：")
     if folder2.strip() == "":
         folder2 = r"V:\Workspaces"
-    FolderComparator.compare_folders(folder1, folder2)
+    is_compare_sha256 = True
+    str3 = input("是否比对文件sha256(默认为比对，输入N时不比对)：")
+    if str3.strip() == "N":
+        is_compare_sha256 = False
+    FolderComparator.compare_folders(folder1, folder2, is_compare_sha256)
