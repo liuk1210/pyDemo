@@ -435,7 +435,7 @@ class HtmlFileTreePrinter:
 
 class FolderComparator:
     @staticmethod
-    def compare_folders(path1, path2, compare_sha256):
+    def compare_folders(path1, path2, compare_sha256, ig_list=None):
         if not os.path.exists(path1):
             print(f"{path1}不存在")
             return
@@ -444,13 +444,13 @@ class FolderComparator:
             return
         base_path1 = os.path.normpath(path1)
         base_path2 = os.path.normpath(path2)
-        same_path_files, diff_info = FolderComparator.collect_file_differences(base_path1, base_path2)
+        same_path_files, diff_info = FolderComparator.collect_file_differences(base_path1, base_path2, ig_list)
         if compare_sha256:
             FolderComparator.compare_files_in_parallel(same_path_files, base_path1, base_path2)
         print("文件夹比对结束")
 
     @staticmethod
-    def collect_file_differences(base_path1: LiteralString, base_path2: LiteralString):
+    def collect_file_differences(base_path1: LiteralString, base_path2: LiteralString, ig_ls=None):
         lock = threading.Lock()
         same_path_files = []
         diff_info = {
@@ -461,12 +461,13 @@ class FolderComparator:
         }
 
         def walk_directory(base_path: LiteralString, other_base: LiteralString, folder_list, file_list, append_same):
-
             for root, dirs, files in os.walk(base_path):
                 relative = os.path.relpath(root, base_path)
                 if relative == ".":
                     relative = ""
                 target = os.path.join(other_base, relative)
+                if ig_ls:
+                    dirs[:] = [d for d in dirs if d not in ig_ls]  # 过滤忽略的文件夹
                 if not os.path.exists(target):
                     with lock:
                         folder_list.append(relative)
@@ -562,4 +563,16 @@ if __name__ == "__main__":
     str3 = input("是否比对文件sha256(默认为比对，输入N时不比对)：")
     if str3.strip() == "N":
         is_compare_sha256 = False
-    FolderComparator.compare_folders(folder1, folder2, is_compare_sha256)
+
+    ignore_input = input(
+        "请输入要忽略的文件夹（多个用逗号分隔），输入N表示不忽略任何文件夹，直接回车使用默认值[node_modules, .git, .svn]："
+    ).strip()
+    if ignore_input == "N":
+        ignore_list = []
+    else:
+        if not ignore_input:
+            ignore_list = ["node_modules", ".git", ".svn"]
+        else:
+            ignore_list = [f.strip() for f in ignore_input.split(',') if f.strip()]
+
+    FolderComparator.compare_folders(folder1, folder2, is_compare_sha256, ignore_list)
